@@ -33,7 +33,7 @@
       ansible.builtin.file:
           path: "{{ tmp_folder }}"
           state: directory
-          mode: '0755'
+          mode: '0700'
           owner: root
           group: root
     - name: Download containerd archive
@@ -59,6 +59,13 @@
         msg:
         - "installed version response code={{ containerd_installed.rc }}"
         - "installed version={{ containerd_installed.stdout }}"
+
+
+      ###  POST-INSTALL Cleanup
+    - name: Remove tmp folder
+      ansible.builtin.file:
+        path: "{{ tmp_folder }}"
+        state: absent
 
 
     
