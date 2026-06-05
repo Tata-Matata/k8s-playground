@@ -26,13 +26,22 @@ module "k8s_playground_server" {
 
   //for attaching firewall
   server_labels = {
-    role = "k8s_playground"
+    role="k8s_playground",
+    firewall="ssh-only"
   }
 
 }
 
 module "hetzner_firewall_ssh_only" {
   source = "../modules/hetzner_firewall_ssh_only"
+
+  #access to the server only from this subnet via ssh
+  admin_ssh_subnet_cidr =  "${local.my_ip}/32"
+
+}
+
+module "hetzner_firewall_k8s_cluster" {
+  source = "../modules/hetzner_firewall_k8s_cluster"
 
   #access to the server only from this subnet via ssh
   admin_ssh_subnet_cidr =  "${local.my_ip}/32"
