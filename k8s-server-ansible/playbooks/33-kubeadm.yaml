@@ -1,4 +1,4 @@
-- name: Install and kubeadm
+- name: Install kubeadm
   hosts: k8s-playground
     
   tasks:
