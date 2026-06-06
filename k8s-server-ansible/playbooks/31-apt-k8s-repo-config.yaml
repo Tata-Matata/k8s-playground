@@ -1,7 +1,5 @@
 - name: Prepare apt repository
   hosts: k8s-playground
-  vars:
-    k8s_version: "1.36"
     
   tasks:
   # Update apt package index 
