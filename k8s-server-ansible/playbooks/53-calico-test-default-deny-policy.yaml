@@ -3,6 +3,8 @@
 
 - name: Implement global default deny policy
   hosts: k8s-playground
+  vars:
+    policy_path: /tmp/default-deny-policy.yaml
   tasks:
 
 
@@ -17,18 +19,18 @@
 
   - name: Render default deny policy manifest
     ansible.builtin.template:
-      src: default-deny-policy.yaml.j2
-      dest: /tmp/default-deny-policy.yaml
+      src: calico-default-deny-policy.yaml.j2
+      dest: "{{  policy_path }}"
       mode: '0644'
 
   - name: Delete policy in case already exists
     ansible.builtin.command:
-      cmd: kubectl delete --force -f /tmp/default-deny-policy.yaml
+      cmd: kubectl delete --force -f "{{  policy_path }}"
     failed_when: false
   
   - name: Apply default deny policy
     ansible.builtin.command:
-      cmd: kubectl create -f /tmp/default-deny-policy.yaml
+      cmd: kubectl create -f "{{  policy_path }}"
   
   ## TEST nothing is reachable
 
