@@ -59,3 +59,10 @@
     ## for currently running shell
     environment:
       PATH: "{{ kubectl_target_folder }}:{{ lookup('env', 'PATH') }}"
+  
+  - name: Persist KUBECONFIG in local .bashrc
+    ansible.builtin.lineinfile:
+      path: "{{ local_home_dir }}/.bashrc"
+      line: 'export KUBECONFIG="{{ adminconf_local_machine_path }}"'
+      create: true
+    delegate_to: localhost
