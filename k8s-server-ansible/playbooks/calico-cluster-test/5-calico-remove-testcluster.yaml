@@ -1,0 +1,10 @@
+# POST-CleanUp
+- name: Clean up after testing rollouts with Calico
+  hosts: k8s-playground
+  tasks:
+
+  - name: Delete temporary namespace with all resources 
+    ansible.builtin.command:
+      cmd: "kubectl  delete --force namespace {{ calico_ns }}"
+    failed_when: false
+
