@@ -2,8 +2,6 @@
 # We roll out nginx and test connection to it from another pod as well as connection to the public internet
 - name: Deploy apps for testing Calico
   hosts: k8s-playground
-  vars:
-    calico_ns: calicostart
   tasks:
 
   - name: Delete temporary namespace with all resources in case already exists
@@ -46,7 +44,7 @@
   
   - name: Log nginx response
     ansible.builtin.debug: 
-      msg: "nginx_http_response.stdout"
+      msg: "{{ nginx_http_response.stdout }}"
     changed_when: false
 
   - name: Check Nginx welcome page 
@@ -65,7 +63,7 @@
   
   - name: Log public internet response
     ansible.builtin.debug: 
-      msg: "public_internet_response.stdout"
+      msg: "{{ public_internet_response.stdout }}"
     changed_when: false
 
   - name: Check public page query response 

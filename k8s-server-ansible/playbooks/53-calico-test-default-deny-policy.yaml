@@ -1,0 +1,86 @@
+## We deny all traffic initially
+## and later gradually allow only what's necessary
+
+- name: Implement global default deny policy
+  hosts: k8s-playground
+  tasks:
+
+
+  ## ADD POLICY
+ 
+    
+  - name: Ensure tmp dir exists
+    ansible.builtin.file:
+      path: /tmp
+      state: directory
+      mode: '0755'
+
+  - name: Render default deny policy manifest
+    ansible.builtin.template:
+      src: default-deny-policy.yaml.j2
+      dest: /tmp/default-deny-policy.yaml
+      mode: '0644'
+
+  - name: Delete policy in case already exists
+    ansible.builtin.command:
+      cmd: kubectl delete --force -f /tmp/default-deny-policy.yaml
+    failed_when: false
+  
+  - name: Apply default deny policy
+    ansible.builtin.command:
+      cmd: kubectl create -f /tmp/default-deny-policy.yaml
+  
+  ## TEST nothing is reachable
+
+  ## Nginx from busybox
+  - name: Query nginx from busybox
+    ansible.builtin.command: kubectl exec --namespace={{ calico_ns }} access -- wget -qO- http://nginx
+    register: nginx_http_response
+    changed_when: false
+    failed_when: false
+  
+  
+  - name: Log nginx response
+    ansible.builtin.debug: 
+      msg: "{{ nginx_http_response.stderr }}"
+    changed_when: false
+
+  - name: Check error code
+    ansible.builtin.assert:
+      that:
+        - nginx_http_response.rc != 0
+        - >
+          'bad address' in nginx_http_response.stderr or
+          'timed out' in nginx_http_response.stderr or
+          'failed' in nginx_http_response.stderr or
+          'refused' in nginx_http_response.stderr
+      fail_msg: "Nginx is still reachable"
+    changed_when: false
+  
+  ## Public internet from busybox
+  
+  - name: Test public internet
+    ansible.builtin.command: kubectl exec --namespace={{ calico_ns }} access --  wget -qO- https://docs.tigera.io/pod-connection-test.txt
+    register: public_internet_response
+    changed_when: false
+    failed_when: false
+  
+  - name: Log public internet response
+    ansible.builtin.debug: 
+      msg: "{{ public_internet_response.stderr }}"
+    changed_when: false
+    failed_when: false
+
+  - name: Check error code
+    ansible.builtin.assert:
+        that:
+          - public_internet_response.rc != 0
+          - >
+            'bad address' in public_internet_response.stderr or
+            'timed out' in public_internet_response.stderr or
+            'failed' in public_internet_response.stderr or
+            'refused' in public_internet_response.stderr
+        fail_msg: "Public internet is still reachable"
+    changed_when: false
+
+
