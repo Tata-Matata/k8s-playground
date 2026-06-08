@@ -1,0 +1,54 @@
+## For the playbook to work you need to download CIS CAT Lite from https://learn.cisecurity.org/cis-cat-lite
+## Place CIS-CAT-Lite.zip into the playbooks folder
+
+- name: Install Java for CIS-CAT Lite
+  hosts: k8s-playground
+  become: true
+
+  vars:
+    java_package: default-jre-headless
+    unzip_package: unzip
+    cis_cat_archive: CIS-CAT-Lite.zip
+    cis_cat_remote_archive: /tmp/CIS-CAT-Lite.zip
+    cis_cat_install_dir: /opt
+
+  tasks:
+  - name: Update apt package index
+    ansible.builtin.apt:
+      update_cache: true
+
+  - name: Install CIS-CAT Lite prerequisites
+    ansible.builtin.apt:
+      name:
+      - "{{ java_package }}"
+      - "{{ unzip_package }}"
+      state: present
+
+  - name: Verify Java is installed
+    ansible.builtin.command: java -version
+    register: java_check
+    changed_when: false
+
+  - name: Show Java version
+    ansible.builtin.debug:
+      msg: "{{ java_check.stderr_lines | default([]) }}"
+  
+  - name: Copy CIS-CAT-Lite archive
+    ansible.builtin.copy:
+      src: "./{{ cis_cat_archive }}"
+      dest: "{{ cis_cat_remote_archive }}"
+      owner: root
+      group: root
+      mode: "0644"
+
+  - name: Extract CIS-CAT-Lite archive
+    ansible.builtin.unarchive:
+      src: "{{ cis_cat_remote_archive }}"
+      dest: "{{ cis_cat_install_dir }}"
+      remote_src: true
+
+  - name: Remove CIS-CAT-Lite archive after extraction
+    ansible.builtin.file:
+      path: "{{ cis_cat_remote_archive }}"
+      state: absent
+
