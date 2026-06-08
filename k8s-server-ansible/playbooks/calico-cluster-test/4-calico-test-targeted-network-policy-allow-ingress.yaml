@@ -3,14 +3,14 @@
 - name: Implement targeted policy
   hosts: k8s-playground
   vars:
-    policy_path: /tmp/calico-allow-ingress.yaml
+    policy_path: "{{ calico_tmp_folder }}/calico-allow-ingress.yaml"
   tasks:
 
 
   ## ADD  POLICY to allow all ingress to nginx from busybox pod
   - name: Ensure tmp dir exists
     ansible.builtin.file:
-      path: /tmp
+      path: "{{ calico_tmp_folder }}"
       state: directory
       mode: '0755'
 

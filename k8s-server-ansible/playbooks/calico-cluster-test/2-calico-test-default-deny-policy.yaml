@@ -4,14 +4,14 @@
 - name: Implement global default deny policy
   hosts: k8s-playground
   vars:
-    policy_path: /tmp/default-deny-policy.yaml
+    policy_path: "{{ calico_tmp_folder }}/default-deny-policy.yaml"
   tasks:
 
 
   ## ADD POLICY   
   - name: Ensure tmp dir exists
     ansible.builtin.file:
-      path: /tmp
+      path: "{{  calico_tmp_folder }}"
       state: directory
       mode: '0755'
 

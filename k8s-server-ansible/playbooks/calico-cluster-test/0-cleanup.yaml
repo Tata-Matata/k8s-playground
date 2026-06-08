@@ -17,13 +17,13 @@
 
   - name: Delete Calico policies
     ansible.builtin.command:
-      cmd: kubectl delete --force -f "/tmp/{{  item }}.yaml.j2"
+      cmd: kubectl delete --force -f "{{ calico_tmp_folder }}/{{  item }}.yaml.j2"
     failed_when: false
     loop: "{{  calico_policies }}"
 
   - name: Delete Calico policy files
     ansible.builtin.file:
-      path: "/tmp/{{  item }}.yaml"
+      path: "{{ calico_tmp_folder }}/{{  item }}.yaml"
       state: absent
     failed_when: false
     loop: "{{  calico_policies }}"
