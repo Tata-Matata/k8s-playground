@@ -54,62 +54,12 @@
       msg: "{{ cis_cat_run.stdout_lines | default([]) }}"
 
   - name: Write nginx manifest for Kubernetes report publishing
-    ansible.builtin.copy:
+    ansible.builtin.template:
+      src: cis-cat-report-nginx.yaml.j2
       dest: "{{ cis_cat_manifest_path }}"
       owner: root
       group: root
       mode: "0644"
-      content: |
-        apiVersion: v1
-        kind: Namespace
-        metadata:
-          name: {{ cis_cat_namespace }}
-        ---
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: {{ cis_cat_nginx_name }}
-          namespace: {{ cis_cat_namespace }}
-        spec:
-          replicas: 1
-          strategy:
-            type: Recreate
-          selector:
-            matchLabels:
-              app: {{ cis_cat_nginx_name }}
-          template:
-            metadata:
-              labels:
-                app: {{ cis_cat_nginx_name }}
-            spec:
-              containers:
-                - name: nginx
-                  image: {{ cis_cat_nginx_image }}
-                  ports:
-                    - containerPort: 80
-                  volumeMounts:
-                    - name: cis-cat-report
-                      mountPath: /usr/share/nginx/html
-                      readOnly: true
-              volumes:
-                - name: cis-cat-report
-                  hostPath:
-                    path: {{ cis_cat_reports_dir }}
-                    type: Directory
-        ---
-        apiVersion: v1
-        kind: Service
-        metadata:
-          name: {{ cis_cat_nginx_name }}
-          namespace: {{ cis_cat_namespace }}
-        spec:
-          selector:
-            app: {{ cis_cat_nginx_name }}
-          ports:
-            - name: http
-              port: {{ cis_cat_service_port }}
-              targetPort: 80
-          type: ClusterIP
 
   - name: Apply nginx manifest to the cluster
     ansible.builtin.command:
