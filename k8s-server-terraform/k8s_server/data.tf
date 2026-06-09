@@ -42,3 +42,11 @@ data "terraform_remote_state" "global_ssh_keys" {
 data "http" "my_ip" {
   url = "https://ipv4.icanhazip.com"
 }
+
+
+## for retrieving the list of all available images in Hetzner Terraform 
+## see outputs
+data "hcloud_images" "all_x86" {
+  with_architecture = ["x86"]
+  with_status       = ["available"]
+}

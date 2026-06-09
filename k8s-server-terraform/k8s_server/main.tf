@@ -4,7 +4,7 @@ module "k8s_playground_server" {
   #server config
   server_name     = "k8s-playground"
   server_location = "nbg1"
-  os_image        = "ubuntu-22.04"
+  os_image        = "ubuntu-24.04"
   server_type     = "cx23"
 
   #admin ssh access
