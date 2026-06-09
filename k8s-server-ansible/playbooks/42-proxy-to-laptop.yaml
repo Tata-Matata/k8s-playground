@@ -4,7 +4,7 @@
   hosts: k8s-playground
   vars:
     local_home_dir: "/home/tati/"
-    adminconf_controlplane_path: /etc/kubernetes/admin.conf
+    adminconf_controlplane_path: "{{ kubeconfig_path }}"
     adminconf_local_machine_folder: "{{  local_home_dir }}/kubernetes/hetzner-playground"
     adminconf_local_machine_path: "{{ adminconf_local_machine_folder }}/admin.conf"
     kubectl_download_url: "https://dl.k8s.io/v{{  k8s_full_version }}/bin/linux/amd64/kubectl"

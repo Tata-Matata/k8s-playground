@@ -1,0 +1,133 @@
+## For the playbook to work you need to download CIS CAT Lite from https://learn.cisecurity.org/cis-cat-lite
+## Place CIS-CAT-Lite.zip into the playbooks folder
+
+- name: Run CIS-CAT Lite and publish HTML report
+  hosts: k8s-playground
+  become: true
+
+  vars:
+    cis_cat_assessor_dir: "{{ cis_cat_install_dir }}/Assessor"
+    cis_cat_cli: "{{ cis_cat_assessor_dir }}/Assessor-CLI.sh"
+    cis_cat_benchmark_file: CIS_Ubuntu_Linux_24.04_LTS_Benchmark_v2.0.0-xccdf.xml
+    cis_cat_benchmark_path: "{{ cis_cat_assessor_dir }}/benchmarks/{{ cis_cat_benchmark_file }}"
+    cis_cat_profile: "Level 1 - Server"
+    cis_cat_reports_dir: /srv/cis-cat-report
+    cis_cat_report_prefix: index
+    cis_cat_namespace: cis-cat-report
+    cis_cat_nginx_name: cis-cat-report-nginx
+    cis_cat_nginx_image: nginx:1.27-alpine
+    cis_cat_manifest_path: /tmp/cis-cat-report-nginx.yaml
+    cis_cat_service_port: 80
+
+  tasks:
+  - name: Ensure CIS-CAT report directory exists
+    ansible.builtin.file:
+      path: "{{ cis_cat_reports_dir }}"
+      state: directory
+      owner: root
+      group: root
+      mode: "0755"
+
+  - name: Ensure CIS-CAT CLI script is executable
+    ansible.builtin.file:
+      path: "{{ cis_cat_cli }}"
+      mode: "0755"
+
+  - name: Run CIS-CAT Lite benchmark and generate HTML report
+    ansible.builtin.command:
+      argv:
+      - "{{ cis_cat_cli }}"
+      - -b
+      - "{{ cis_cat_benchmark_path }}"
+      - -p
+      - "{{ cis_cat_profile }}"
+      - -nts
+      - -rd
+      - "{{ cis_cat_reports_dir }}"
+      - -rp
+      - "{{ cis_cat_report_prefix }}"
+    register: cis_cat_run
+    changed_when: true
+
+  - name: Show CIS-CAT execution summary
+    ansible.builtin.debug:
+      msg: "{{ cis_cat_run.stdout_lines | default([]) }}"
+
+  - name: Write nginx manifest for Kubernetes report publishing
+    ansible.builtin.copy:
+      dest: "{{ cis_cat_manifest_path }}"
+      owner: root
+      group: root
+      mode: "0644"
+      content: |
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: {{ cis_cat_namespace }}
+        ---
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: {{ cis_cat_nginx_name }}
+          namespace: {{ cis_cat_namespace }}
+        spec:
+          replicas: 1
+          strategy:
+            type: Recreate
+          selector:
+            matchLabels:
+              app: {{ cis_cat_nginx_name }}
+          template:
+            metadata:
+              labels:
+                app: {{ cis_cat_nginx_name }}
+            spec:
+              containers:
+                - name: nginx
+                  image: {{ cis_cat_nginx_image }}
+                  ports:
+                    - containerPort: 80
+                  volumeMounts:
+                    - name: cis-cat-report
+                      mountPath: /usr/share/nginx/html
+                      readOnly: true
+              volumes:
+                - name: cis-cat-report
+                  hostPath:
+                    path: {{ cis_cat_reports_dir }}
+                    type: Directory
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ cis_cat_nginx_name }}
+          namespace: {{ cis_cat_namespace }}
+        spec:
+          selector:
+            app: {{ cis_cat_nginx_name }}
+          ports:
+            - name: http
+              port: {{ cis_cat_service_port }}
+              targetPort: 80
+          type: ClusterIP
+
+  - name: Apply nginx manifest to the cluster
+    ansible.builtin.command:
+      cmd: kubectl apply -f {{ cis_cat_manifest_path }}
+    register: cis_cat_nginx_apply
+    changed_when: >-
+      'created' in cis_cat_nginx_apply.stdout or
+      'configured' in cis_cat_nginx_apply.stdout or
+      'unchanged' not in cis_cat_nginx_apply.stdout
+
+  - name: Wait for nginx deployment rollout
+    ansible.builtin.command:
+      cmd: kubectl rollout status deployment/{{ cis_cat_nginx_name }} -n {{ cis_cat_namespace }} --timeout=120s
+    environment:
+      KUBECONFIG: "{{ kubeconfig_path }}"
+    changed_when: false
+
+  - name: Show local port-forward command
+    ansible.builtin.debug:
+      msg: "Use kubectl --kubeconfig ~/kubernetes/hetzner-playground/admin.conf port-forward -n {{ cis_cat_namespace }} svc/{{ cis_cat_nginx_name }} 8888:{{ cis_cat_service_port }} and then open http://localhost:8888/{{ cis_cat_report_prefix }}.html. kubectl proxy is not the right tool for this."
+
