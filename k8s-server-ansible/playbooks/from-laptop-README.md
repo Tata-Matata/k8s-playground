@@ -23,3 +23,13 @@ otherwise
 
 kubectl --kubeconfig ~/kubernetes/hetzner-playground/admin.conf get nodes
 
+
+## CIS CAT Lite report
+
+Use 
+
+kubectl --kubeconfig ~/kubernetes/hetzner-playground/admin.conf port-forward -n cis-cat-report svc/cis-cat-report-nginx 8888:80 
+
+and then open 
+
+http://localhost:8888/index.html
