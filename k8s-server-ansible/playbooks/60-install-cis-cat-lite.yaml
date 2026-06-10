@@ -3,12 +3,17 @@
 
 - name: Install Java for CIS-CAT Lite
   hosts: k8s-playground
+  gather_facts: false
   vars:
     unzip_package: unzip
     cis_cat_archive: CIS-CAT-Lite.zip
+    ## playbook_dir is internal Ansible var, resolves to the directory of the currently running playbook
+    cis_cat_archive_local_path: "{{ playbook_dir }}/{{ cis_cat_archive }}"
     cis_cat_remote_archive: /tmp/CIS-CAT-Lite.zip
     java_runtime_archive: /tmp/temurin-jre-{{ java_version }}.tar.gz
     java_download_url: https://api.adoptium.net/v3/binary/latest/{{ java_version }}/ga/linux/x64/jre/hotspot/normal/eclipse
+    ssh_private_key_file: "{{ lookup('ansible.builtin.config', 'DEFAULT_PRIVATE_KEY_FILE') }}"
+    ssh_target_host: "{{ hostvars[inventory_hostname].ansible_host | default(inventory_hostname) }}"
 
   tasks:
   - name: Update apt package index
@@ -78,14 +83,31 @@
     ansible.builtin.assert:
       that:
       - java_version in java_check.stderr
+
+  - name: Remove existing CIS-CAT-Lite archive before copying
+    ansible.builtin.file:
+      path: "{{ cis_cat_remote_archive }}"
+      state: absent
   
-  - name: Copy CIS-CAT-Lite archive
-    ansible.builtin.copy:
-      src: "./{{ cis_cat_archive }}"
-      dest: "{{ cis_cat_remote_archive }}"
+  - name: Copy CIS-CAT-Lite archive with scp
+    ansible.builtin.command:
+      argv:
+      - scp
+      - -q
+      - -i
+      - "{{ ssh_private_key_file }}"
+      - "{{ cis_cat_archive_local_path }}"
+      - "root@{{ ssh_target_host }}:{{ cis_cat_remote_archive }}"
+    delegate_to: localhost
+    changed_when: true
+
+  - name: Ensure CIS-CAT-Lite install directory exists
+    ansible.builtin.file:
+      path: "{{ cis_cat_install_dir }}"
+      state: directory
       owner: root
       group: root
-      mode: "0644"
+      mode: "0755"
 
   - name: Extract CIS-CAT-Lite archive
     ansible.builtin.unarchive:
