@@ -2,10 +2,12 @@
 ## Now we will allow only restricted access
 ## In the first step, we allow all Egress to busybox only
 
-- name: Implement targeted policy
+- name: Implement targeted policy to allow egress from busybox
   hosts: k8s-playground
   vars:
-    policy_path: "{{ calico_tmp_folder }}/calico-allow-egress.yaml"
+    policy_name: calico-allow-egress
+    policy_path: "{{ calico_tmp_folder }}/{{ policy_name }}.yaml"
+    wget_timeout_seconds: 5
   tasks:
 
 
@@ -19,7 +21,7 @@
 
   - name: Render targeted policy manifest
     ansible.builtin.template:
-      src: calico-allow-egress.yaml.j2
+      src: "{{ policy_name }}.yaml.j2"
       dest: "{{  policy_path }}"
       mode: '0644'
 
@@ -34,47 +36,24 @@
   
   ## TEST public internet now reachable
   - name: Test public internet
-    ansible.builtin.command: kubectl exec --namespace={{ calico_ns }} access --  wget -qO- https://docs.tigera.io/pod-connection-test.txt
-    register: public_internet_response
-    changed_when: false
-    
-  - name: Log public internet response
-    ansible.builtin.debug: 
-      msg: "{{ public_internet_response.stdout }}"
-    changed_when: false
-
-  - name: Check public page query response 
-    ansible.builtin.assert:
-      that:
-        - "'successfully connected' in public_internet_response.stdout"
-      fail_msg: "Public internet not reached"
-    changed_when: false
+    ansible.builtin.include_tasks: check-wget-success.yaml
+    vars:
+      wget_command: >-
+        kubectl exec --namespace={{ calico_ns }} access --
+        wget --timeout={{ wget_timeout_seconds }} --tries=1 -qO-
+        https://docs.tigera.io/pod-connection-test.txt
+      expected_success_text: successfully connected
+      success_fail_msg: Public internet not reached
 
 
   ## Nginx from busybox should fail, because default deny policy blocks ingress traffic to nginx 
   - name: Query nginx from busybox
-    ansible.builtin.command: kubectl exec --namespace={{ calico_ns }} access -- wget -qO- http://nginx
-    register: nginx_http_response
-    changed_when: false
-    failed_when: false
-  
-  
-  - name: Log nginx response
-    ansible.builtin.debug: 
-      msg: "{{ nginx_http_response.stderr }}"
-    changed_when: false
-
-  - name: Check error code
-    ansible.builtin.assert:
-      that:
-        - nginx_http_response.rc != 0
-        - >
-          'bad address' in nginx_http_response.stderr or
-          'timed out' in nginx_http_response.stderr or
-          'failed' in nginx_http_response.stderr or
-          'refused' in nginx_http_response.stderr
-      fail_msg: "Nginx is still reachable"
-    changed_when: false
+    ansible.builtin.include_tasks: check-wget-failure.yaml
+    vars:
+      wget_command: >-
+        kubectl exec --namespace={{ calico_ns }} access --
+        wget --timeout={{ wget_timeout_seconds }} --tries=1 -qO- http://nginx
+      failure_fail_msg: Nginx is still reachable
 
 
 

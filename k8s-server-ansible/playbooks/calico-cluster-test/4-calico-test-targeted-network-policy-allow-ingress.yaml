@@ -1,9 +1,11 @@
 ## Allow ingress traffic to nginx pods from busybox pods
 
-- name: Implement targeted policy
+- name: Implement targeted policy to allow ingress into nginx 
   hosts: k8s-playground
   vars:
-    policy_path: "{{ calico_tmp_folder }}/calico-allow-ingress.yaml"
+    policy_name: calico-allow-ingress
+    policy_path: "{{ calico_tmp_folder }}/{{ policy_name }}.yaml"
+    wget_timeout_seconds: 5
   tasks:
 
 
@@ -16,7 +18,7 @@
 
   - name: Render targeted policy manifest
     ansible.builtin.template:
-      src: calico-allow-ingress.yaml.j2
+      src: "{{ policy_name }}.yaml.j2"
       dest: "{{  policy_path }}"
       mode: '0644'
 
@@ -32,22 +34,13 @@
 
   ## Nginx from busybox should be reachable now
   - name: Query nginx from busybox
-    ansible.builtin.command: kubectl exec --namespace={{ calico_ns }} access -- wget -qO- http://nginx
-    register: nginx_http_response
-    changed_when: false
-
-
-  - name: Log nginx response
-    ansible.builtin.debug: 
-      msg: "{{ nginx_http_response.stdout }}"
-    changed_when: false
-
-  - name: Check Nginx welcome page 
-    ansible.builtin.assert:
-      that:
-        - "'Welcome to nginx' in nginx_http_response.stdout"
-      fail_msg: "Nginx not reached"
-    changed_when: false
+    ansible.builtin.include_tasks: check-wget-success.yaml
+    vars:
+      wget_command: >-
+        kubectl exec --namespace={{ calico_ns }} access --
+        wget --timeout={{ wget_timeout_seconds }} --tries=1 -qO- http://nginx
+      expected_success_text: Welcome to nginx
+      success_fail_msg: Nginx not reached
 
 
 

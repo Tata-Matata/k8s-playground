@@ -4,7 +4,9 @@
 - name: Implement global default deny policy
   hosts: k8s-playground
   vars:
-    policy_path: "{{ calico_tmp_folder }}/default-deny-policy.yaml"
+    policy_name: calico-default-deny-policy
+    policy_path: "{{ calico_tmp_folder }}/{{ policy_name }}.yaml"
+    wget_timeout_seconds: 5
   tasks:
 
 
@@ -17,7 +19,7 @@
 
   - name: Render default deny policy manifest
     ansible.builtin.template:
-      src: calico-default-deny-policy.yaml.j2
+      src: "{{ policy_name }}.yaml.j2"
       dest: "{{  policy_path }}"
       mode: '0644'
 
@@ -34,53 +36,22 @@
 
   ## Nginx from busybox
   - name: Query nginx from busybox
-    ansible.builtin.command: kubectl exec --namespace={{ calico_ns }} access -- wget -qO- http://nginx
-    register: nginx_http_response
-    changed_when: false
-    failed_when: false
-  
-  
-  - name: Log nginx response
-    ansible.builtin.debug: 
-      msg: "{{ nginx_http_response.stderr }}"
-    changed_when: false
-
-  - name: Check error code
-    ansible.builtin.assert:
-      that:
-        - nginx_http_response.rc != 0
-        - >
-          'bad address' in nginx_http_response.stderr or
-          'timed out' in nginx_http_response.stderr or
-          'failed' in nginx_http_response.stderr or
-          'refused' in nginx_http_response.stderr
-      fail_msg: "Nginx is still reachable"
-    changed_when: false
+    ansible.builtin.include_tasks: check-wget-failure.yaml
+    vars:
+      wget_command: >-
+        kubectl exec --namespace={{ calico_ns }} access --
+        wget --timeout={{ wget_timeout_seconds }} --tries=1 -qO- http://nginx
+      failure_fail_msg: Nginx is still reachable
   
   ## Public internet from busybox
   
   - name: Test public internet
-    ansible.builtin.command: kubectl exec --namespace={{ calico_ns }} access --  wget -qO- https://docs.tigera.io/pod-connection-test.txt
-    register: public_internet_response
-    changed_when: false
-    failed_when: false
-  
-  - name: Log public internet response
-    ansible.builtin.debug: 
-      msg: "{{ public_internet_response.stderr }}"
-    changed_when: false
-    failed_when: false
-
-  - name: Check error code
-    ansible.builtin.assert:
-        that:
-          - public_internet_response.rc != 0
-          - >
-            'bad address' in public_internet_response.stderr or
-            'timed out' in public_internet_response.stderr or
-            'failed' in public_internet_response.stderr or
-            'refused' in public_internet_response.stderr
-        fail_msg: "Public internet is still reachable"
-    changed_when: false
+    ansible.builtin.include_tasks: check-wget-failure.yaml
+    vars:
+      wget_command: >-
+        kubectl exec --namespace={{ calico_ns }} access --
+        wget --timeout={{ wget_timeout_seconds }} --tries=1 -qO-
+        https://docs.tigera.io/pod-connection-test.txt
+      failure_fail_msg: Public internet is still reachable
 
 
