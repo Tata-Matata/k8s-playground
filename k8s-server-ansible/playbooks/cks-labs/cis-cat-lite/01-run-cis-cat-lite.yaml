@@ -79,5 +79,5 @@
 
   - name: Show local port-forward command
     ansible.builtin.debug:
-      msg: "Use kubectl --kubeconfig ~/kubernetes/hetzner-playground/admin.conf port-forward -n {{ cis_cat_namespace }} svc/{{ cis_cat_nginx_name }} 8888:{{ cis_cat_service_port }} and then open http://localhost:8888/{{ cis_cat_report_prefix }}.html. kubectl proxy is not the right tool for this."
+      msg: "Use kubectl --kubeconfig ~/kubernetes/hetzner-playground/admin.conf port-forward -n {{ cis_cat_namespace }} svc/{{ cis_cat_nginx_name }} 8888:{{ cis_cat_service_port }} and then open http://localhost:8888/{{ cis_cat_report_prefix }}.html"
 
