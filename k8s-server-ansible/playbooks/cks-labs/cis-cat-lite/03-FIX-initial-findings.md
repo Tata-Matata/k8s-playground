@@ -1,4 +1,4 @@
-## The idea
+# The idea
 
 As part of preparation for CKS, we want to practice using CIS CAT Lite tool to discover and fix security vulnerabilities on an Ubuntu server. For discovering specific K8s cluster vulnerabilities, we are going to use kube-bench.
 
@@ -44,3 +44,9 @@ Later playbooks, however, might intentionally break certain security features of
 | `-p` | `--profile` | Benchmark profile to use |
 
 5. After fixing the initial findings, run playbook run-cis-cat-lite again and check the report
+
+6. For help - check folder initial-findings-fixes
+   
+
+
+
