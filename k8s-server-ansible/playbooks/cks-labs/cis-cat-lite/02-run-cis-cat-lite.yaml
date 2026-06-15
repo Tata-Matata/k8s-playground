@@ -5,17 +5,15 @@
   hosts: k8s-playground
   become: true
 
+  vars_files:
+  - cis-cat-vars.yaml
+
   vars:
     cis_cat_assessor_dir: "{{ cis_cat_install_dir }}/Assessor"
     cis_cat_cli: "{{ cis_cat_assessor_dir }}/Assessor-CLI.sh"
     cis_cat_benchmark_file: CIS_Ubuntu_Linux_24.04_LTS_Benchmark_v2.0.0-xccdf.xml
     cis_cat_benchmark_path: "{{ cis_cat_assessor_dir }}/benchmarks/{{ cis_cat_benchmark_file }}"
     cis_cat_profile: "Level 1 - Server"
-    cis_cat_reports_dir: /srv/cis-cat-report
-    cis_cat_report_prefix: index
-    cis_cat_namespace: cis-cat-report
-    cis_cat_nginx_name: cis-cat-report-nginx
-    cis_cat_service_port: 80
 
   tasks:
   - name: Ensure CIS-CAT report directory exists
@@ -53,5 +51,5 @@
 
   - name: Show local port-forward command
     ansible.builtin.debug:
-      msg: "Use kubectl --kubeconfig ~/kubernetes/hetzner-playground/admin.conf port-forward -n {{ cis_cat_namespace }} svc/{{ cis_cat_nginx_name }} 8888:{{ cis_cat_service_port }} and then open http://localhost:8888/{{ cis_cat_report_prefix }}.html"
+      msg: "Use kubectl --kubeconfig ~/kubernetes/hetzner-playground/admin.conf port-forward -n {{ cis_cat_namespace }} svc/{{ cis_cat_nginx_name }} {{ cis_cat_local_port_forward_port }}:{{ cis_cat_service_port }} and then open http://localhost:{{ cis_cat_local_port_forward_port }}/{{ cis_cat_report_prefix }}.html"
 

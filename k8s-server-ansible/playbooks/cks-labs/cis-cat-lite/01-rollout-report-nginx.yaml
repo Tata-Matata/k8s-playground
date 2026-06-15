@@ -4,13 +4,8 @@
   hosts: k8s-playground
   become: true
 
-  vars:
-    cis_cat_reports_dir: /srv/cis-cat-report
-    cis_cat_namespace: cis-cat-report
-    cis_cat_nginx_name: cis-cat-report-nginx
-    cis_cat_nginx_image: nginx:1.27-alpine
-    cis_cat_manifest_path: /tmp/cis-cat-report-nginx.yaml
-    cis_cat_service_port: 80
+  vars_files:
+  - cis-cat-vars.yaml
 
   tasks:
   - name: Write nginx manifest for Kubernetes report publishing
