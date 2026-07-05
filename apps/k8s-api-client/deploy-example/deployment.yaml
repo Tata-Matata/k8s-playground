@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-api-client
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-api-client
+  template:
+    metadata:
+      labels:
+        app: k8s-api-client
+    spec:
+      serviceAccountName: k8s-api-client
+      containers:
+        - name: web
+          image: docker.io/your-dockerhub-user/k8s-api-client:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kubernetes API Client | Pods</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f1ea;
+      --panel: #fffdf8;
+      --text: #1f2933;
+      --muted: #52606d;
+      --accent: #0f766e;
+      --border: #d9d3c7;
+      --error-bg: #fef2f2;
+      --error-border: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Iosevka Aile", "IBM Plex Sans", sans-serif;
+      background: radial-gradient(circle at top, #ffffff, var(--bg) 60%);
+      color: var(--text);
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 {
+      margin-bottom: 0.25rem;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: -0.04em;
+    }
+    p { color: var(--muted); }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.55rem 0.9rem;
+      font-size: 0.95rem;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .toolbar a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      background: rgba(15, 118, 110, 0.04);
+    }
+    tr:last-child td { border-bottom: 0; }
+    .empty, .error {
+      padding: 1rem 1.25rem;
+    }
+    .error {
+      background: var(--error-bg);
+      border-top: 1px solid var(--error-border);
+      color: #991b1b;
+    }
+    @media (max-width: 768px) {
+      .toolbar { align-items: flex-start; flex-direction: column; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      td {
+        padding: 0.75rem 1.25rem;
+        border-bottom: 0;
+      }
+      td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.2rem;
+      }
+      tr {
+        border-bottom: 1px solid var(--border);
+        padding: 0.3rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Pods</h1>
+    <p>Lists pods by calling the Kubernetes API from inside the container using the pod's service account.</p>
+    <div class="meta">
+      <div class="chip">Namespace: {{ .Namespace }}</div>
+      <div class="chip">Client config: {{ .Source }}</div>
+      <div class="chip">Queried: {{ .QueriedAt }}</div>
+    </div>
+    <section class="panel">
+      <div class="toolbar">
+        <strong>/pods</strong>
+        <a href="/">Home</a>
+      </div>
+      {{ if .Error }}
+      <div class="error">{{ .Error }}</div>
+      {{ end }}
+      {{ if .Pods }}
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Namespace</th>
+            <th>Status</th>
+            <th>Pod IP</th>
+            <th>Node</th>
+            <th>Age</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Pods }}
+          <tr>
+            <td data-label="Name">{{ .Name }}</td>
+            <td data-label="Namespace">{{ .Namespace }}</td>
+            <td data-label="Status">{{ .Phase }}</td>
+            <td data-label="Pod IP">{{ .PodIP }}</td>
+            <td data-label="Node">{{ .NodeName }}</td>
+            <td data-label="Age">{{ .Age }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+      {{ else if not .Error }}
+      <div class="empty">No pods returned for this namespace.</div>
+      {{ end }}
+    </section>
+  </main>
+</body>
+</html>
