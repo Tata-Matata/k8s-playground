@@ -212,3 +212,43 @@ the token is generated on demand and returned directly to the kubelet.
 
 But we can create a token for a service account using kubectl create token my-sa
 </details>
+
+
+## How does a service account get groups assigned to it?
+<details>
+<summary>Answer</summary>
+
+Every ServiceAccount automatically belongs to several groups.
+```
+system:serviceaccounts
+system:serviceaccounts:default
+system:authenticated
+```
+
+These groups are added by the API server during authentication. We can see them with
+
+<code>kubectl auth can-i --as=system:serviceaccount:default:nginx-sa --list</code>
+
+</details>
+
+## Where to find path to the key pair that are used to sign and validate SA tokens?
+<details>
+<summary>Answer</summary>
+on API server configuration
+
+```
+--service-account-signing-key-file=/etc/kubernetes/pki/sa.key
+--service-account-key-file=/etc/kubernetes/pki/sa.pub
+
+```
+
+You can even specify multiple verification keys:
+
+```
+--service-account-key-file=key1.pub
+--service-account-key-file=key2.pub
+```
+
+which is useful during key rotation.
+
+</details>
