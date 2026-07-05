@@ -1,6 +1,6 @@
 # k8s-api-client
 
-Go web application that calls the Kubernetes API to retrieve certai data and renders it as HTML on different endpoints like `/pods`.
+Go web application that calls the Kubernetes API to retrieve certain data and renders it as HTML on different endpoints like `/pods`.
 
 ## Features
 
