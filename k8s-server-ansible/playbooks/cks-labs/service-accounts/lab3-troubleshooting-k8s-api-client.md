@@ -29,7 +29,31 @@ The yaml shows the error clearly
       account default/k8s-api-client: serviceaccount "k8s-api-client" not found'
 
 ```
+so we need to create service account k8s-api-client in default namespace
 
+<code>kubectl create sa  k8s-api-client</code>
+
+Now let's check what is happening with our deployment
+
+<code>kubectl rollout restart deploy/k8s-api-client</code>
+
+Now if we check the deployment, the pod is in state Running. One problem solved.
+If we check in browser - the app is running, but if we click Pods, we get error 
+
+```
+pods is forbidden: User "system:serviceaccount:default:k8s-api-client" cannot list resource "pods" in API group "" in the namespace "default"
+```
+Clearly, our new service account lacks the necessary permissions to list pods. To confirm this,
+we can run
+
+<code>kubectl auth can-i --list --as system:serviceaccount:default:k8s-api-client</code>
+
+To fix this, we need to create role and rolebinding for the SA
+
+```
+kubectl create role k8s-api-client --verb=get --verb=list --verb=watch --resource=pods
+kubectl create rolebinding k8s-api-client-binding --role=k8s-api-client --serviceaccount=default:k8s-api-client
+```
 
 </details>
 
