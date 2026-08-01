@@ -177,10 +177,17 @@ kubectl get csr mycsr -o jsonpath='{.status.certificate}' | base64 -d | openssl 
 </details>
 
 
+# Check runtime kubelet configuration
 
+<details>
+<summary>Answer</summary>
 
-curl \
-  --cacert ca.crt \
-  --cert client.crt \
-  --key client.key \
-  https://localhost:10250/configz
+Replace **localhost** in the command below - by IP or hostname as specified in kubelet serving certificate SANs, if the command fails with <code> curl: (60) SSL: no alternative certificate subject name matches target host name 'localhost'</code>
+
+The certificate and key are, for example, the ones used by API server (/etc/kubernetes/pki)
+
+```
+curl --cacert ca.crt --cert apiserver-kubelet-client.crt --key apiserver-kubelet-client.key  https://localhost:10250/configz
+```
+
+</details>
