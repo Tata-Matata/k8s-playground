@@ -1,8 +1,10 @@
 # Certificates API vs traditional certificates signing
 
-If someone needs certificate to authenticate to the cluster, they would create a private key, then a certificate signing request. Then an admin with access to the cluster's CA root certificate and private key would create the new certificate from this CSR. So in this traditional approach you always need someone to access directly the root certificate and private key file. And the procedure has to be repeated every time the certificate expires.
+If someone needs certificate to authenticate to the cluster, they would create a private key, then a certificate signing request. Then an admin with access to the cluster's CA root certificate and private key would create the new certificate from this CSR. So in this traditional approach, you always need someone to access directly the root certificate and private key file. And the procedure has to be repeated every time the certificate expires.
 
-Certificates API allows an admin - instead of logging into the server where the CA private key is stored - to create a K8s object **CertificateSigningRequest** that contains base64 encoded CSR received from the user. Then any admin with proper cluster role (s. below) can approve this request with <code>kubectl certificate approve</code>. The approved request then goes to the signer specified in the **signerName**. If the signer accepts the request, it issues the certificate. The certificate data is then available base64 encoded in the approved K8s object.
+Certificates API allows an admin - instead of logging into the server where the CA private key is stored - to create a K8s object **CertificateSigningRequest** that contains base64 encoded CSR received from the user. Then any admin with proper cluster role (s. below) can approve this request with <code>kubectl certificate approve</code>. 
+
+The approved request then goes to the signer (controller deployed on the cluster, for ex., in kube-controller-manager) specified in the **signerName**. If the signer accepts the request, it issues the certificate. The certificate data is then available base64 encoded in the approved K8s object.
 
 ## Who are the signers?
 
@@ -18,17 +20,17 @@ Each signer has its own policy about what it will sign. If the CSR doesn't satis
 
 These are implemented by the **kube-controller-manager**. These are intended for Kubernetes' own PKI.
 
-#### kubernetes.io/kube-apiserver-client
+#### kubernetes.io/kube-apiserver-client-kubelet
 
 Every kubelet authenticates to the API server using a client certificate.
-That certificate is typically signed by th is signer.
+That certificate is typically signed by the built-in signer.
 These certificates identify the kubelet as
 
 ```
 CN=system:node:<node-name>
 O=system:nodes
 ```
-The Node Authorizer and NodeRestriction admission plugin rely on these identities to grant kubelets only the permissions they need.
+The Node Authorizer and NodeRestriction admission plugin rely on these identities to grant kubelets only the permissions they need. They limit what that identity can do.
 
 ##### Who issues the CSR in this case?
 The kubelet itself creates the CSR. When a node joins the cluster using <code>kubeadm join</code>, it initially authenticates with a bootstrap token. The kubelet then generates a private key and a CSR with with
@@ -59,7 +61,7 @@ For example:
 - kubectl port-forward
 
 The kubelet acts as server and needs to prove its identity to the client, so the kubelet needs a server certificate.
-That certificate is signed by this signer. 
+That certificate is signed by the built-in signer as well. 
 
 
 ##### Who issues?
@@ -73,14 +75,14 @@ signerName:
 If serving certificate **rotation** is enabled, it periodically renews that certificate in exactly the same way.
 
 
-#### kubernetes.io/kube-apiserver-client-kubelet
+#### kubernetes.io/kube-apiserver-client
 
 This one is for ordinary clients authenticating to the API server.
 - administrators
 - automation
 - controllers outside the cluster
 
-When admin user creates **CertificateSigningRequest** object, usually the signer will be kubernetes.io/kube-apiserver-client-kubelet
+When admin user creates **CertificateSigningRequest** object, usually the signer will be kubernetes.io/kube-apiserver-client
 
 ```
 apiVersion: certificates.l8s.io/v1
