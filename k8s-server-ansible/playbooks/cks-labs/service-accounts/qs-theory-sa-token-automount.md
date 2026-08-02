@@ -1,214 +1,71 @@
-## What is the difference between a (legacy) ServiceAccount token and a projected ServiceAccount token?
+## What is the default of automountServiceAccountToken? where can it be configured?
 
 <details>
 <summary>Show answer</summary>
 
-A **projected ServiceAccount** token is generated via the TokenRequest API,
-has 
-- an expiration time, 
-- can be audience-scoped, and 
-- is automatically rotated by kubelet. 
+The option can be set on both service account and pod. 
+If **serviceAccountName** is not specified explicitly, the default one is used. 
 
-The **legacy ServiceAccount** token was long-lived and
-stored in a Secret. The Secret object contained token, ca.crt and namespace. It was mounted into pods.
+1. So if neither SA not automountServiceAccountToken is configured, a new pod has a projected volume mounted into the container, with the token that has permissions of the default SA.
 
-</details>
+2. If automountServiceAccountToken is true on SA and a pod with this SA does not set automountServiceAccountToken false, the token will be mounted.
 
-## How can a token be used?
+3. If a pod sets automountServiceAccountToken to false, while SA has it set to true, the pod's setting overrides the SA, so the token is not mounted.
 
-<details>
-<summary>Answer</summary>
 
-The token is usually verified by whatever service receives it.
-Most commonly that's the Kubernetes API server itself. If a Pod for ex. requests info from the API.
-
-But it could also be another service that trusts Kubernetes-issued tokens.
-For ex., Pod --> Vault can use Kubernetes ServiceAccount authentication, 
-where Vault verifies the token with the Kubernetes API server.
 
 </details>
 
-## What is the purpose of the audience field in a token? How does the API server know what audience to expect?
+## What are the risks of having automountServiceAccountToken set to true in the pod?
 
 <details>
-<summary>Answer</summary>
+<summary>Show answer</summary>
 
-JWT audience (in general) specifies which service is expected to accept the token.
-A service should reject tokens issued for a different audience.
-
-
-The API server is configured with accepted audiences:
-```
---api-audiences=https://kubernetes.default.svc
-```
-
-When a request arrives with a bearer token, the API server:
-
-1. Verifies the JWT signature.
-2. Reads the aud claim.
-3. Checks whether at least one audience in the token matches one of its configured audiences.
-4. If not - 401 Unauthorized
-
-### Why is this useful?
-
-Imagine a Pod needs to authenticate to:
-
-- Kubernetes API
-- Vault
-- Some internal application
-
-Without audiences, a token issued for one service could potentially be replayed against another.
-
-With audiences:
-
-Token A -> Kubernetes only
-Token B -> Vault only
-Token C -> Internal App only
-
-A stolen Vault token cannot be used against the Kubernetes API.
-
-When kubelet requests the token, it can specify audiences. For the automatically mounted ServiceAccount token, Kubernetes requests an audience suitable for talking to the Kubernetes API.
-
-We can create custom token which Vault can validate but K8s API will reject 
-
-```
-kubectl create token my-sa --audience=vault
-```
+Suppose we have a simple NGINX Pod serving static HTML. It does not need to access K8s API.
+If we automount SA anyway, we  give the container credentials it never uses.
+If an attacker finds a vulnerability in the application, without the token the attacker is limited to whatever is inside that container.
+With a mounted token, however, the attacker has an authenticated identity. Even restricted get,list,watch permissions can give the attacker information about K8s objects in the cluster (namespaces, image versions, labels,
+annotations)
 
 </details>
 
-## Which component provisions token when pod is created? Describe the flow
+## When is it appropriate to have automountServiceAccountToken set to true?
 
 <details>
-<summary>Answer</summary>
-Kubelet does.
+<summary>Show answer</summary>
 
-1. When Pod starts, Kubelet sees projected SA token volume
+If the application needs access to K8s API. For example:
 
-2. Kubelet calls TokenRequest API
-   
-3. API server signs JWT
-   
-4. JWT returned to kubelet
-   
-5. Kubelet writes file into pod volume
+- Prometheus Operator
+- cert-manager
+- Argo CD
+- Flux
 
-The pod never asks for a token. ? really? and when the app needs access to K8s api?
-</details>
+They continuously watch Kubernetes resources.
 
-## Why does API server sign the token? How and when is the signature verified?
-
-<details>
-<summary>Answer</summary>
-A JWT contains claims such as:
-
-```
-{
-  "sub": "system:serviceaccount:default:my-sa",
-  "aud": ["https://kubernetes.default.svc"],
-  "exp": 1780000000
-}
-```
-
-If the API server simply returned unsigned JSON, anybody could modify it and become an admin 
-
-```
-{
-  "sub": "system:serviceaccount:kube-system:admin",
-  "aud": ["https://kubernetes.default.svc"],
-  "exp": 1780000000
-}
-```
-
-API server owns a **private key** (--service-account-signing-key-file) and a **public key** (--service-account-key-file)
-
-When API server creates token, it becomes
-```
-header.payload.signature
-```
-
-Later when Pod issues API request to the server, it uses Authorization: Bearer Token.
-API server will take header+payload and verify signature using public key. 
-
-If valid - authenticated, if not - 401 Unauthorized
 
 </details>
 
-## How does RBAC authorization happen based on the token?
-
-From the JWT, API server derives **system:serviceaccount:default:my-sa** 
-```
-{
-  "sub": "system:serviceaccount:default:my-sa",
-  "aud": ["https://kubernetes.default.svc"],
-  "exp": 1780000000
-}
-```
-
-It also derives groups such as
-
-```
-system:serviceaccounts
-system:serviceaccounts:default
-system:authenticated
-
-```
-**RBAC** happens when API server asks: Can system:serviceaccount:default:my-sa get pods?
-
-## Inside the Pod's /var/run/secrets/kubernetes.io/serviceaccount/ we find not only the token but also other files? What are they and what for?
+## How can we limit the token's power if we have to set automountServiceAccountToken to true?
 
 <details>
-<summary>Answer</summary>
+<summary>Show answer</summary>
+1. Set automountServiceAccountToken: false
+2. mount the token somewhere else
+3. use a shorter expiration
+4. mount multiple service account tokens with different audiences
+5. combine your own ConfigMaps, Secrets, DownwardAPI, etc.
 
-- token
-- namespace: the file contains the service account namespace
-- ca.crt: if Pod wants to call the API server - how does it know that it is talking to the real API server and not an attacker? 
-  The file contains the cluster CA certificate. When the server presents its certificate, the CA certificate is used to verify it.
-  So the API call could be something similar to: 
-  ```
-  curl --cacert ca.crt -H "Authorization: Bearer $TOKEN"  https://kubernetes.default.svc/api
-
-  ```
-
-</details>
-
-## What is a projected volume?
-
-<details>
-<summary>Answer</summary>
-
-A projected volume combines data from multiple sources into a single mounted directory.
-
-- Source_1: JWT token generated by K8s API server, mounted into /var/run/secrets/kubernetes.io/serviceaccount/token
 ```
-- serviceAccountToken:
-    expirationSeconds: 3607
-    path: token
+volumes:
+- name: my-token
+  projected:
+    sources:
+    - serviceAccountToken:
+        path: token
+        audience: vault
+        expirationSeconds: 600
+
 ```
 
-- Source_2: ConfigMap with CA certificate. The certificate is copied from ConfigMap into /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-```
-- configMap:
-    name: kube-root-ca.crt
-    items:
-    - key: ca.crt
-      path: ca.crt
-```
-
-A projected volume is like a **virtual filesystem** assembled by kubelet from multiple sources:
-- configMap comes from the ConfigMap object; same for Secret
-- serviceAccountToken is generated by API server TokenRequest API
-- for downwardAPI the backing source is pod metadata like namespace, for ex.
-</details>
-
-
-## Can we see the token object in the cluster?
-<details>
-<summary>Answer</summary>
-
-No. There is no Secret created and no token object stored anywhere.
-When kubelet requests a token via the TokenRequest API,
-the token is generated on demand and returned directly to the kubelet.
-
-But we can create a token for a service account using kubectl create token my-sa
 </details>

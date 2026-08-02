@@ -191,3 +191,34 @@ curl --cacert ca.crt --cert apiserver-kubelet-client.crt --key apiserver-kubelet
 ```
 
 </details>
+
+
+# Generate private key and CA certificate, sign with it a client certificate for admin user
+
+
+<details>
+<summary>Answer</summary>
+
+
+```
+openssl genrsa -out ca.key 2048
+openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr
+openssl x509 -req -in ca.csr -signkey ca.key -out ca.crt
+
+openssl genrsa -out admin.key 2048
+openssl req -new -key admin.key -subj "/CN=kube-admin/OU=system:masters" -out admin.csr
+openssl x509 -req -in admin.csr -CA ca.crt -CAKey ca.key -out admin.crt
+
+```
+CN **kube-admin** is both for logging and RBAC. Group **system:masters** is to differentiate the user as admin.
+To include **alternative** names, use openssl.cnf file and add section 
+
+```
+[alt_names]
+DNS.1 = kubernetes
+DNS2. = kubernetes.default.svc
+
+```
+
+Then use <code>-config openssl.cnf</code> when creating CSR
+</details>

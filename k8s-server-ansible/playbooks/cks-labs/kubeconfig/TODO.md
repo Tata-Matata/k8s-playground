@@ -1,0 +1,1 @@
+1. multiple contexts? clusters? troubleshoot expired/invalid certs? RBAC?
