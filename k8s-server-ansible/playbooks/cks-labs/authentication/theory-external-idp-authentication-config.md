@@ -1,13 +1,10 @@
-#### External identity provider
-<details>
-<summary>Show answer</summary>
+### External identity provider
 
-1. When user runs <code>kubectl</code>, kubectl needs token to issue authenticated request to K8s server
-2. kubectl itself does not know how to talk to an identity provider. Instead, it delegates that job to an authentication plugin (or uses a token that has already been obtained).
-   
-There are three common scenarios.
 
-##### Scenario 1: Exec plugin (most common today)
+1. When user runs <code>kubectl</code>, kubectl needs Bearer token to issue authenticated request to K8s server
+2. kubectl itself does not know how to talk to an identity provider. Instead, it delegates that job to an authentication plugin if it is configured
+
+##### Exec plugin 
 
 Your kubeconfig contains something like:
 
@@ -25,20 +22,7 @@ users:
 Now when user runs <code>kubectl get pods</code>, kubectl sends "I need credentials" to exec plugin (kubelogin),
 the plugin opens browser (Keycloak / Entra ID / Okta), the external OIDC provides JWT. Now kubectl can use it to send requests to K8s server.
 
-##### Scenario 2: Token already exists
-
-kubeconfig simply contains
-
-```
-users:
-- name: my-user
-  user:
-    token: eyJhbGc...
-```
-
-
-
-##### Scenario 3: Cloud CLI
+##### Cloud CLI
 
 Managed Kubernetes services often use their cloud CLI. For example:
 
@@ -105,15 +89,16 @@ Authorization: Bearer eyJ...
 
 </details>
 
-#### AuthenticationConfiguration
+### AuthenticationConfiguration
 <details>
 <summary>Show answer</summary>
 
 
 
-Recent Kubernetes versions support authenticating JWTs directly via AuthenticationConfiguration. You can define how claims map to usernames and groups without running a full OIDC provider.
+Recent Kubernetes versions support authenticating JWTs directly via **AuthenticationConfiguration**. 
 AuthenticationConfiguration is a Kubernetes API object that lets you configure how the API server authenticates users, primarily via JWT authenticators (OIDC and other JWT issuers).
-This configuration tells Kubernetes **how to interpret the token.**
+This configuration tells Kubernetes **how to interpret the token**, how claims map to usernames and groups.
+It also specifies how to verify the JWT (issuer, audiences, signing keys/JWKS)
 
 ```
 apiVersion: apiserver.config.k8s.io/v1
@@ -131,12 +116,11 @@ jwt:
       claim: groups
 ```
 
-This tells the API server:
+There are really two independent parts:
 
-- Trust JWTs issued by https://issuer.example.com.
-- Accept tokens intended for the audience kubernetes.
-- Use the sub claim as the Kubernetes username.
-- Use the groups claim as Kubernetes groups.
+**Verification**: When the token arrives, API server checks if the issuer (iss), the audience are the expected ones? It checks expiration and whether the signature can be trusted (the API server has the issuer's public key to verify the signature).
+
+**Mapping**: Tells API server to use the sub claim as the Kubernetes username and to use the groups claim as Kubernetes groups.
 
 
 Previously, you configured OIDC authentication with many API server flags:
@@ -189,22 +173,3 @@ Groups:
 
 RBAC then evaluates those groups.
 
-#### Relation to TokenReview
-
-A TokenReview returns exactly the identity produced by the configured authenticator.
-
-For a JWT like the example above, the response would contain something similar to:
-
-```
-status:
-  authenticated: true
-  user:
-    username: alice
-    groups:
-    - developers
-    - oncall
-```
-
-This makes TokenReview an excellent troubleshooting tool because it lets you verify whether the API server is extracting the expected username and groups before RBAC is evaluated.
-
-</details>
