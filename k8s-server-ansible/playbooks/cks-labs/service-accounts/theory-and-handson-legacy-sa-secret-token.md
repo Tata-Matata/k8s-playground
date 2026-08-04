@@ -94,6 +94,19 @@ Even if we delete the secret, if the token is still cryptographically valid, it 
 
 </details>
 
+## Do we actually need a Secret?
+
+<details>
+<summary>Show answer</summary>
+
+If we just need a long-lived token that belongs to a certain SA, we can generate it without Secret
+
+```
+kubectl create token my-sa
+
+```
+
+</details>
 
 ## What are the disadvantages of this (legacy) ServiceAccount secret token?
 

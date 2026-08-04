@@ -27,13 +27,13 @@ k get secret my-service-account-token -o jsonpath="{.data.token}" | base64 -d
 
 </details>
 
-## Decode token from  a secret
+## Create secret account token
 
 <details>
 <summary>Answer</summary>
 
 ```
-k get secret my-service-account-token -o jsonpath="{.data.token}" | base64 -d
+kubectl create token my-sa
 
 ```
 
