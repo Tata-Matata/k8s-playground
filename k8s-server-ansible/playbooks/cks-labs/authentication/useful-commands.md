@@ -38,3 +38,22 @@ k get secret my-service-account-token -o jsonpath="{.data.token}" | base64 -d
 ```
 
 </details>
+
+## Generate bootstrap token for new kubelet
+
+<details>
+<summary>Answer</summary>
+
+```
+kubeadm token create token1.randomsecret1234 --dry-run --print-join-command --ttl 2h
+
+```
+
+It will print something like 
+
+```
+
+kubeadm join controlplane-ip:6443 --token token1.randomsecret1234 --discovery-token-ca-cert-hash sha256:04a08f2775e81d16597bf99bb1...
+```
+
+</details>
