@@ -57,3 +57,16 @@ kubeadm join controlplane-ip:6443 --token token1.randomsecret1234 --discovery-to
 ```
 
 </details>
+
+## To inspect the HTTP calls involved in a specific kubectl operation you can turn up the verbosity
+
+<details>
+<summary>Answer</summary>
+
+```
+kubectl --v=8 version
+
+```
+
+</details>
+
