@@ -7,12 +7,15 @@ ABAC (Attribute-Based Access Control) makes authorization decisions based on att
 
 **Example**
 
-Bob can just read pods in namespace *projectns*. Alice can do anything to all resources
+Bob can just read pods in namespace *projectns*. Alice can do anything to all resources. The last example is for SA.
 
 ```
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user": "bob", "namespace": "projectns", "resource": "pods", "readonly": true}}
 
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user": "alice", "namespace": "*", "resource": "*", "apiGroup": "*"}}
+
+{"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:serviceaccount:default:my-app","namespace":"default","resource":"pods","apiGroup":"","verb":"get"}}
+
 ```
 
 **File format jsonl**
@@ -58,35 +61,6 @@ If API server runs as static pod, the file must be mounted into the pod
 
 </details>
 
-## TokenReview API TODO
-<details>
-<summary>Show answer</summary>
-If you submit the service account token to the TokenReview API:
 
-```
-apiVersion: authentication.k8s.io/v1
-kind: TokenReview
-spec:
-  token: <service-account-token>
-```
-
-the response contains:
-
-```
-status:
-  authenticated: true
-  user:
-    username: system:serviceaccount:default:nginx-sa
-    uid: ...
-    groups:
-    - system:serviceaccounts
-    - system:serviceaccounts:default
-    - system:authenticated
-```
-TokenReview is an actual Kubernetes API resource, but it's a little unusual because it is not persisted in etcd.
-TokenReview → send object to API server → API server authenticates the token → returns the result → discards the object.
-Creating TokenReview objects requires the create permission on the tokenreviews.authentication.k8s.io resource.
-
-</details>
 
 
