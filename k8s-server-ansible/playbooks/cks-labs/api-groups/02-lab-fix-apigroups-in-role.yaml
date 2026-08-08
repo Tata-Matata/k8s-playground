@@ -14,6 +14,14 @@
       namespace: default
 
   tasks:
+  - name: Ensure RBAC lab manifest directory exists
+    ansible.builtin.file:
+      path: "{{ rbac_lab_manifest_dest | dirname }}"
+      state: directory
+      owner: root
+      group: root
+      mode: "0755"
+
   - name: Copy RBAC lab manifest to the control-plane host
     ansible.builtin.copy:
       src: "{{ rbac_lab_manifest_src }}"
