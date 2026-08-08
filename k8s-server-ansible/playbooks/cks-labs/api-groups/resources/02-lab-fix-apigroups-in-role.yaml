@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: default
+  name: apigroups
   namespace: default
 rules:
 - apiGroups: [""]
@@ -18,16 +18,24 @@ rules:
 
 ---
 
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: apigroups
+  namespace: default
+
+---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: default
+  name: apigroups
   namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: default
+  name: apigroups
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: apigroups
   namespace: default

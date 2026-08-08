@@ -7,10 +7,13 @@
     rbac_lab_manifest_dest: /root/labs/api-groups/02-lab-fix-apigroups-in-role.yaml
     rbac_lab_resources:
     - kind: role
-      name: default
+      name: apigroups
       namespace: default
     - kind: rolebinding
-      name: default
+      name: apigroups
+      namespace: default
+    - kind: serviceaccount
+      name: apigroups
       namespace: default
 
   tasks:
