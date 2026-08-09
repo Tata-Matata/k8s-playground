@@ -1,6 +1,7 @@
 k8s_version: "1.36"
 k8s_full_version: "{{ k8s_version }}.1"
 kubeconfig_path: /etc/kubernetes/admin.conf
+crictl_version: "v1.30.0"
 
 
 #for Calico
