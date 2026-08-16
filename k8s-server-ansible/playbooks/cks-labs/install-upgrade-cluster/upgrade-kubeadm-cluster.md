@@ -11,7 +11,7 @@ First master, then workers. For workers, we can apply different strategies, for 
 </details>
 
 
-### Update first control plane
+# Update one control plane node
 
 The instructions are very well documented in K8s docs.
 These are just the general steps for Ubuntu.
@@ -80,9 +80,101 @@ sudo kubeadm upgrade apply v1.35.x
 
 ```
 
-#### Manually upgrade your CNI provider plugin.
+</details>
+
+#### Manually upgrade your CNI provider plugin
 
 
 
 
+# Update other control planes
+<details>
+<summary>Answer</summary>
 
+Same as the first control plane node but use:
+
+```
+sudo kubeadm upgrade node
+
+```
+instead of apply
+
+And upgrading the CNI provider plugin is no longer needed.
+
+</details>
+
+# Kubelet update on control planes
+
+####  Drain the node
+
+<details>
+<summary>Answer</summary>
+
+Same as the first control plane node but use:
+
+```
+kubectl drain <node-to-drain> --ignore-daemonsets
+
+```
+
+</details>
+
+#### Upgrade kubelet and kubectl
+
+<details>
+<summary>Answer</summary>
+
+Restart kubelet afterwards
+
+
+```
+
+sudo apt-mark unhold kubelet kubectl && \
+sudo apt-get update && sudo apt-get install -y kubelet='1.35.x-*' kubectl='1.35.x-*' && \
+sudo apt-mark hold kubelet kubectl
+
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+
+```
+
+</details>
+
+#### Uncordon the node
+
+<details>
+<summary>Answer</summary>
+
+Restart kubelet afterwards
+
+
+```
+
+kubectl uncordon <node-to-uncordon>
+
+```
+
+</details>
+
+
+# On worker nodes
+
+<details>
+<summary>Answer</summary>
+
+Similar steps:
+
+1. Upgrade kubeadm
+2. Upgrade node with kubeadm. This upgrades the local kubelet configuration:
+
+
+```
+sudo kubeadm upgrade node
+
+```
+
+
+
+3. Drain the node, upgrade kubelet and kubectl, uncordon the node - the same way as for controlplane
+
+</details>
