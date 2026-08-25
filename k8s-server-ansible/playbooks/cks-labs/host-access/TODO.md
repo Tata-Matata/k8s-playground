@@ -122,3 +122,15 @@ securityContext:
 
 Then run amicontained in each and compare what it reports.
 
+
+
+3. apparmor profiles
+Check whether AppArmor is enabled on your worker.
+Create a tiny AppArmor profile.
+Load it on the worker.
+Run a pod using localhost/my-profile.
+Verify /proc/self/attr/current.
+Attempt an operation explicitly denied by the profile.
+Observe the Permission denied.
+Check the kernel/AppArmor logs.
+Compare the experiment with a seccomp profile denying a syscall.
