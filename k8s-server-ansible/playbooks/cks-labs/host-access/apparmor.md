@@ -92,8 +92,21 @@ profile myapp {
 
 ```
 
+</details>
+
+### Modes
+
+<details>
+<summary>Answer</summary>
+
+AppArmor profiles can operate in different modes.
+
+**Enforce**: Violations are blocked.
+**Complain**: Violations are logged, but not necessarily blocked.   This is useful when developing a profile.
+**unconfined**: The process is not restricted by an AppArmor profile.
 
 </details>
+
 
 ### Check whether the kernel has AppArmor enabled
 
