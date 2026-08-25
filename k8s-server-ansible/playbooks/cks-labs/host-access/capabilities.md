@@ -82,3 +82,36 @@ For ex., ping historically needed the ability to create raw ICMP packets. That's
 
 </details>
 
+### Check capabilities attached to executable
+
+<details>
+<summary>Answer</summary>
+
+<code> getcap /usr/bin/ping </code>
+
+/usr/bin/ping cap_net_raw=ep
+
+This means the executable file itself has a file capability.
+
+</details>
+
+### Find executables on the system with special capabilities 
+
+<details>
+<summary>Answer</summary>
+
+<code> sudo getcap -r / 2>/dev/null </code>
+
+useful for security auditing
+
+</details>
+
+### Check capabilities of the running process
+
+<details>
+<summary>Answer</summary>
+
+<code> getpcaps <PID> </code>
+<code> getpcaps $(pgrep nginx) </code>
+
+</details>
