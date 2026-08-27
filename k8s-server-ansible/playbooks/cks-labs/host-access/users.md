@@ -150,3 +150,114 @@ useradd -d /opt/sam -s /bin/bash -u 2328 -g admin sam
 -G - additional group, not primary one
 
 </details>
+
+### Get info about user and its groups
+
+<details>
+<summary>Answer</summary>
+
+```
+id sam
+getent passwd sam
+grep '^sam:' /etc/passwd
+
+for your own user
+id
+getent passwd "$USER"
+```
+
+</details>
+
+### View all users
+
+<details>
+<summary>Answer</summary>
+
+```
+getent passwd
+```
+
+</details>
+
+### shadow vs passwd files
+
+<details>
+<summary>Answer</summary>
+
+**/etc/passwd** normally does not contain actual passwords anymore. It contains basic account information.
+
+**/etc/shadow** contains password hashes and password-aging/account-lock information.
+
+
+</details>
+
+
+### Inspect password aging
+
+<details>
+<summary>Answer</summary>
+
+```
+sudo chage -l sam
+
+```
+</details>
+
+### Set a maximum password lifetime to 90 days
+
+<details>
+<summary>Answer</summary>
+
+```
+sudo chage -M 90 sam
+
+```
+</details>
+
+
+### Require a password change at next login
+
+<details>
+<summary>Answer</summary>
+
+```
+sudo chage -d 0 sam
+
+```
+</details>
+
+### Set account expiration:
+
+<details>
+<summary>Answer</summary>
+
+```
+sudo chage -E 2026-12-31 sam
+
+```
+</details>
+
+
+### Create a user named bob on host1 and configure password-less ssh access from host2 (from user root for ex.) to host1 (to user bob)
+
+<details>
+<summary>Answer</summary>
+
+1. Create user bob on host1 with useradd
+
+2. Generate key pair on host2
+
+<code> ssh-keygen -t rsa </code>
+
+For ex., you generated **~/.ssh/id_ed25519** and **~/.ssh/id_ed25519.pub**
+
+
+3. Copy public key to host1's bob's authorized keys
+    
+<code> ssh-copy-id -i ~/.ssh/id_ed25519.pub bob@host1 </code>
+
+will add the key to **/home/bob/.ssh/authorized_keys**
+
+After that, test <code> ssh bob@host1 </code>
+
+</details>

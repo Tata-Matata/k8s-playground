@@ -157,3 +157,42 @@ outgoing →  allowed
 
 
 </details>
+
+
+### Delete a rule
+
+<details>
+<summary>Answer</summary>
+
+1. Delete by repeating the rule with delete
+
+If you have:
+
+```
+sudo ufw allow 22/tcp
+```
+
+delete it with:
+
+```
+sudo ufw delete allow 22/tcp
+```
+
+2. Delete by rule number
+
+```
+sudo ufw status numbered
+
+[ 1] 22/tcp    ALLOW IN    Anywhere
+[ 2] 80/tcp    ALLOW IN    Anywhere
+[ 3] 443/tcp   ALLOW IN    Anywhere
+
+sudo ufw delete 2
+
+```
+
+
+
+
+
+</details>

@@ -137,3 +137,5 @@ Compare the experiment with a seccomp profile denying a syscall.
 
 4. simple lab - misconfigured sudoers - the intention was to add group but missing % adds user
 %admin ALL=(ALL) ALL 
+
+1. the task is to configure ssh login from say root on host1 to user bob on host2. (ssh-keygen, ssh-copy-id). Only after accomplishing all this, it turns out that the login doesnt work, because bob has /usr/sbin/nologin as their shell

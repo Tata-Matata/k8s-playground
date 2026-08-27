@@ -43,7 +43,6 @@ Now imagine your **web server** runs as **root** — or somehow has sufficient p
 But you can create an **AppArmor profile **saying:
 
 ```
-
 /usr/sbin/nginx {
     /var/www/** r,
     /etc/nginx/** r,
