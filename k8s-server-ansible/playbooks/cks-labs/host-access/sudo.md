@@ -46,6 +46,22 @@ alice can use sudo specifically to restart nginx, rather than having unrestricte
 
 </details>
 
+### Update user bob so that it can run sudo commands without entering the sudo password
+
+<details>
+<summary>Answer</summary>
+
+```
+vi /etc/sudoers
+
+jim  ALL=(ALL) NOPASSWD:ALL
+
+```
+
+NOPASSWD: is appended to the last part that specifies the command
+
+</details>
+
 
 ### Check what your current user is allowed to run through sudo
 

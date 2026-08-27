@@ -48,7 +48,6 @@ means another module (nf_nat) is using nf_conntrack.
 <summary>Answer</summary>
 
 ```
-
 sudo modprobe overlay 
 
 lsmod | grep overlay

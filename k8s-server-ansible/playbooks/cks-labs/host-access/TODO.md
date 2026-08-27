@@ -134,3 +134,6 @@ Attempt an operation explicitly denied by the profile.
 Observe the Permission denied.
 Check the kernel/AppArmor logs.
 Compare the experiment with a seccomp profile denying a syscall.
+
+4. simple lab - misconfigured sudoers - the intention was to add group but missing % adds user
+%admin ALL=(ALL) ALL 
