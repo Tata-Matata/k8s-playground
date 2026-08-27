@@ -1,3 +1,20 @@
+### Kubernetes admission-control mechanism
+
+The API server has an admission phase:
+
+API request
+    ↓
+Authentication
+    ↓
+Authorization
+    ↓
+Admission
+    ↓
+Persistence
+
+During admission, the API server can call admission controllers (built-in or external webhooks)
+
+
 ### Types of admission controllers and their configuration
 
 
@@ -147,6 +164,16 @@ kube-apiserver -h | grep enable-admission-plugins
 
 <details>
 <summary>Answer</summary>
+
+
+This is the list of things to implement to get your custom admission plugin running:
+
+- Deployment
+- Service
+- TLS
+- ValidatingWebhookConfiguration
+- webhook server with AdmissionReview handling
+
 
 
 1. Develop application with an HTTPS endpoint that understands Kubernetes AdmissionReview requests.This API server receives an AdmissionReview object from K8s API server and must return an AdmissionReview response.
@@ -320,6 +347,40 @@ webhooks:
 
 ```
 
+
+
+</details>
+
+### Built-in admission plugin that uses an external webhook service
+
+<details>
+<summary>Answer</summary>
+
+This is a combination of both types of admission controllers.
+
+#### ImagePolicyWebhook 
+
+is a **built-in admission plugin** in the Kubernetes API server, but it acts as a **client to an external image-policy webhook server**. And this:
+
+```
+apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- name: ImagePolicyWebhook
+  path: /etc/kubernetes/imgvalidation/imagepolicy-conf.yaml
+```
+
+is exactly the kind of configuration used with this K8s API server option:
+
+```
+--admission-control-config-file=/path/to/admission-config.yaml
+```
+
+The built-in ImagePolicyWebhook plugin handles the integration with the API server, while the actual image policy decision is made by the external webhook.
+
+The path in the example above:  <code>/etc/kubernetes/imgvalidation/imagepolicy-conf.yaml </code> is the path to the configuration file consumed by the built-in ImagePolicyWebhook plugin.
+
+That configuration tells the plugin things such as where the external policy webhook is and how to communicate with it.
 
 
 </details>
