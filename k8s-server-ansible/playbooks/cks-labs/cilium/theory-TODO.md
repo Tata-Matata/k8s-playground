@@ -1,5 +1,9 @@
 ## WireGuard
 
+
+<details>
+<summary>Answer</summary>
+
 Cilium supports more than one encryption mechanism: WireGuard, IPsec. 
 
 Cilium can use encrypted **WireGuard** tunnel to encrypt traffic **between Kubernetes nodes**. WireGuard is VPN technology integrated into Linux.
@@ -27,8 +31,13 @@ What is the difference between pod-to-pod encryption and node-to-node encryption
 
 What does the Cilium agent do versus the Linux WireGuard implementation?
 
+</details>
+
 
 ## Installation and configuration
+
+<details>
+<summary>Answer</summary>
 
 ### With CLI, without Helm 
 
@@ -95,8 +104,12 @@ encryption:
 
 ```
 
+</details>
 
 ## eBPF
+
+<details>
+<summary>Answer</summary>
 
 **eBPF** = where Cilium implements the networking logic (datapath).
 **WireGuard** = the encryption mechanism used by that networking logic.
@@ -158,3 +171,5 @@ Over the physical network, you therefore see something like:
 Node1 ═══ UDP / encrypted ═══► Node2
 
 Node 2 receives it, WireGuard decrypts it, and Cilium's networking machinery delivers the resulting packet to Pod B.
+
+</details>
