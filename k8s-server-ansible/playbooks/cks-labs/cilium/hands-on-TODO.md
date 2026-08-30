@@ -75,10 +75,27 @@ Then capture traffic on Node 1's physical interface, e.g.:
 
 <code>tcpdump -i eth0 -n host node-2-ip  </code>
 
-You should not see the original Pod-to-Pod traffic as ordinary TCP/HTTP. Instead, you'll see UDP traffic associated with WireGuard, typically to the WireGuard port:
+You should not see the original Pod-to-Pod traffic as ordinary TCP/HTTP.
+
+#### We can also exec into Cilium daemonset's pod and check configuration
 
 ```
-IP <node1-ip>.<random> > <node2-ip>.51871: UDP
+kubectl -n kube-system exec -ti ds/cilium -- bash and execute the following commands:
+
+Check that WireGuard has been enabled (number of peers should correspond to a number of nodes subtracted by one):
+
+cilium-dbg status | grep Encryption
+
+Install tcpdump
+
+apt-get update
+apt-get -y install tcpdump
+
+Check that traffic is sent via the cilium_wg0 tunnel device is encrypted:
+
+tcpdump -n -i cilium_wg0 -X
+
+The -n option avoids DNS lookups, and the -X option shows packet content in both hexadecimal and ASCII format.
 
 ```
 
@@ -99,3 +116,4 @@ wg show
 You should see WireGuard peers and their public keys.
 
 </details>
+

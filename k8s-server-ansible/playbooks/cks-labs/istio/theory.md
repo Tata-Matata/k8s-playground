@@ -154,3 +154,32 @@ spec:
 ```
 
 </details>
+
+
+
+kubectl exec -ti -n test test -- curl --head http://helloworld.default.svc:5000/hello 
+
+root@controlplane ~ ➜  kubectl exec -ti -n test test -- curl --head http://helloworld.default.svc:5000/hello
+curl: (56) Recv failure: Connection reset by peer
+command terminated with exit code 56
+
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+
+
+    IMPORTANT: This is happening because Istio Injection is not enabled on the test namespace, so traffic from the test pod to the helloworld endpoint is going over plaintext. But the PeerAuthentication policy is enforcing that all traffic must be mTLS encrypted.
+
+
+    How do we fix this?
+
+If your first instinct is to enable Istio Injection on the test namespace, delete the test pod and recreate it; you would then be 100% correct.
+
+Let's enable Istio Injection on the test namespace, and then delete and recreate the test pod.
+
+
