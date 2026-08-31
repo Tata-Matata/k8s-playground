@@ -8,6 +8,7 @@ gVisor enhances container isolation by putting an extra kernel-like security bou
 
 **Normal containers** share the host kernel. Namespaces, cgroups, capabilities, seccomp, AppArmor, etc. restrict what the container can do, but the container still interacts with the host kernel.
 
+```
 container process
       │
       │ open("/data/file")
@@ -17,6 +18,8 @@ host Linux kernel
       ▼
 host filesystem / devices
 
+```
+
 This means a serious vulnerability in the kernel code reachable from a container could potentially become a container escape.
 
 
@@ -25,6 +28,7 @@ So if the application does: open("/data/file", ...), the syscall doesn't simply 
 
 Instead, gVisor's Sentry component implements the relevant Linux kernel behavior in user space.
 
+```
 cat
  ↓
 syscall
@@ -36,6 +40,8 @@ gVisor implements the operation
 possibly host syscall(s)
  ↓
 host Linux kernel
+
+```
 
 So gVisor doesn't eliminate the host kernel. It reduces the amount of direct interaction between the workload and the host kernel. Therefore, an attacker who compromises an application has to get through another security boundary before reaching the host kernel.
 
